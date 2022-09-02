@@ -1,37 +1,76 @@
 <!DOCTYPE html>
 <html>
-<head>  
-	<style>  
-		canvas {  
-		    border: 1px solid #d3d3d3;  
-		    background-color: #f1f1f1;  
-		}  
-	</style>
-</head>  
-<body onload="startGame()">  
-	<script>  
-		function startGame() {  
-		    myGameArea.start();  
-		}  
-		  
-		var  myGameArea = {  
-		    canvas : document.createElement("canvas"),  
-		    start : function() {  
-		        this.canvas.width = 480;  
-		        this.canvas.height = 270;  
-		        this.context = this.canvas.getContext("2d");
-		        document.getElementById("gameDiv").appendChild(this.canvas);
-		    }
-		}
-	</script>
+	<head>
+		<style>
+			canvas {
+				border: 1px solid #d3d3d3;
+				background-color: #f1f1f1;
+			}
+		</style>
+	</head>
+	<body onload="initGame()">
+		<script>
+			var pixelsPerInch = 10;
 
-	<h1>Plunger tube calculations</h1>
-	<p>Calculate your expected FPS based on plunger system specifications.</p>
-	<a href="index.html">Return to Home page</a><br><br>
+			//TODO: Grab some defined dimensions from html elements
 
-	<div id="gameDiv" style="border: 0px solid #FFFF00; display: flex; justify-content: center;"></div>
+			var myGameArea = {
+				canvas : document.createElement("canvas"),
+				start : function() {
+					this.canvas.width = 480;
+					this.canvas.height = 270;
+					this.context = this.canvas.getContext("2d");
+					document.getElementById("gameDiv").appendChild(this.canvas);
+					this.frameNo = 0;
+					this.interval = setInterval(updateGameArea, 20); //Set the redraw period in ms?
+				},
+				clear : function() {
+					// Clear the draw area
+			        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			    }
+			}
 
-	<h3>What is the purpose of this tool?</h3>
-	<p>Oftentime when I construct springers with spare parts, I often find myself asking "Am I getting the right FPS? Are there major inefficiencies I should be tackling and optimising?". This tool provides an FPS approximation based on a simple physics model as a sanity check.</p>
-</body>
+			function initGame() {
+				myGameArea.start();
+				plunger = new component(30, 20, "blue", 20, myGameArea.canvas.height/2);
+			}
+			
+			// Create a component with pixel dimensions, Pos anchored to upper left corner
+			function component(width, height, color, xPos, yPos) {
+				this.width = width;
+				this.height = height;
+				this.xPos = xPos;
+				this.yPos = yPos;
+				this.xVel = 0;
+				this.yVel = 0;
+
+				this.update = function(){
+					ctx = myGameArea.context;
+					ctx.fillStyle = color;
+					ctx.fillRect(this.xPos, this.yPos, this.width, this.height);
+				}
+			}
+
+			function updateGameArea() {
+			    myGameArea.clear(); //Clear the draw area
+
+			    // Testing movement and refresh TODO: Delete and replace with parameterised
+			    plunger.xPos += 1;
+
+			    // Redraw everything
+			    plunger.update();
+			}
+		</script>
+
+		<h1>Plunger tube calculations</h1>
+		<p>Calculate your expected FPS based on plunger system specifications.</p>
+		<a href="index.html">Return to Home page</a><br><br>
+
+		<div id="gameDiv" style="border: 0px solid #FFFF00; display: flex; justify-content: center;"></div>
+
+		<h3>What is the purpose of this tool?</h3>
+		<p>Oftentime when I construct springers with spare parts, I often find myself asking "Am I getting the right FPS? Are there major inefficiencies I should be tackling and optimising?". This tool provides an FPS approximation based on a simple physics model as a sanity check.</p>
+		<h3>Is this tool accurate?</h3>
+		<p>Probably not, this is just an approximation. Measurement inaccuracies exist, and I'm using a discrete time state space model (20ms intervals) vs a more ideal continuous time state space model driven by analytical solutions, which inevitably lend themselves to various systematic error. Hopefully with more user input and data points, it'll become better.</p>
+	</body>
 </html>
