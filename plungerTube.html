@@ -10,9 +10,7 @@
 	</head>
 	<body onload="initGame()">
 		<script>
-			var pixelsPerInch = 10;
-
-			//TODO: Grab some defined dimensions from html elements
+			var pixelsPerMM;
 
 			var myGameArea = {
 				canvas : document.createElement("canvas"),
@@ -22,19 +20,68 @@
 					this.context = this.canvas.getContext("2d");
 					document.getElementById("gameDiv").appendChild(this.canvas);
 					this.frameNo = 0;
-					this.interval = setInterval(updateGameArea, 20); //Set the redraw period in ms?
+					this.interval = setInterval(updateGameArea, 20);
 				},
 				clear : function() {
 					// Clear the draw area
-			        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			    }
+					this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+				}
 			}
 
 			function initGame() {
 				myGameArea.start();
+
+				// Grab values
+				var airPressure = parseFloat(document.getElementById("airPressure").value);
+				var airVolume = parseFloat(document.getElementById("airVolume").value);
+				var dartMass = parseFloat(document.getElementById("dartMass").value);
+				var barrelFriction = parseFloat(document.getElementById("barrelFriction").value);
+				var barrelLength = parseFloat(document.getElementById("barrelLength").value);
+				var barrelWidth = parseFloat(document.getElementById("barrelWidth").value);
+
+				// Convert to metric SI
+				var airPressureUnits = document.getElementById("airPressureUnits").value;
+				var airVolumeUnits = document.getElementById("airVolumeUnits").value;
+				var barrelFrictionUnits = document.getElementById("barrelFrictionUnits").value;
+				var barrelLengthUnits = document.getElementById("barrelLengthUnits").value;
+				var barrelWidthUnits = document.getElementById("barrelWidthUnits").value;
+
+				// Calculate zoom/sizing in pixels
+				var tankWidth = (Math.cbrt(airVolume)) * 10; //assume cube air volume, convert to mm
+				var totalLength = (tankWidth + barrelLength) * 1.25; //Add 25 margin buffer to total mm length
+				var pixelsPerMM = myGameArea.canvas.width/totalLength;
+
+				// Barrel
+				var barrelThicknessPixels = 1.6 * pixelsPerMM;
+				var barrelLengthPixels = barrelLength * pixelsPerMM;
+				var barrelWidthPixels = barrelWidth * pixelsPerMM;
+				barrelTop = new component(barrelLengthPixels, barrelWidthPixels, "orange", 20, myGameArea.canvas.height/2);
+				barrelBottom = new component(barrelLengthPixels, barrelWidthPixels, "orange", 20, myGameArea.canvas.height/2);
+				
+				// Tank
+				var tankWidthPixels = tankWidth * pixelsPerMM;
+				tank = new component(tankWidthPixels, tankWidthPixels, "black", 
+					myGameArea.canvas.width * 0.9 - tankWidthPixels, 
+					myGameArea.canvas.height/2 - tankWidthPixels/2)
+
+				// Dart
 				plunger = new component(30, 20, "blue", 20, myGameArea.canvas.height/2);
 			}
-			
+
+			function updateGameArea() {
+				myGameArea.clear(); //Clear the draw area
+
+				// Testing movement and refresh TODO: Delete and replace with parameterised
+				plunger.xPos += 1;
+
+				// Redraw everything
+				barrelTop.update();
+				barrelBottom.update();
+				tank.update();
+				plunger.update();
+			}
+
+
 			// Create a component with pixel dimensions, Pos anchored to upper left corner
 			function component(width, height, color, xPos, yPos) {
 				this.width = width;
@@ -50,27 +97,73 @@
 					ctx.fillRect(this.xPos, this.yPos, this.width, this.height);
 				}
 			}
-
-			function updateGameArea() {
-			    myGameArea.clear(); //Clear the draw area
-
-			    // Testing movement and refresh TODO: Delete and replace with parameterised
-			    plunger.xPos += 1;
-
-			    // Redraw everything
-			    plunger.update();
-			}
 		</script>
-
 		<h1>Plunger tube calculations</h1>
 		<p>Calculate your expected FPS based on plunger system specifications.</p>
 		<a href="index.html">Return to Home page</a><br><br>
 
-		<div id="gameDiv" style="border: 0px solid #FFFF00; display: flex; justify-content: center;"></div>
+		<div id="gameDiv" style="border: 0px solid #FFFF00; display: flex; justify-content: center;">
+		</div>
 
+		<div id="infoDiv" style="border: 0px solid #FFFF00; display: flex">
+			<div id="chamberDiv" style="display:inline-block;float:left; width: 33%">
+				<label for="barrelLength">Barrel length</label><br>
+				<input type="text" id="barrelLength" value="300">
+				<select id="barrelLengthUnits">
+					<option>mm</option>
+					<option>inch</option>
+				</select><br>
+
+				<label for="barrelWidth">Barrel width</label><br>
+				<input type="text" id="barrelWidth" value="12.7">
+				<select id="barrelWidthUnits">
+					<option>mm</option>
+					<option>inch</option>
+				</select><br>
+			</div>
+
+			<div id="slowingDiv" style="display:inline-block;float:left; width: 33%">
+				<label for="barrelFriction">Barrel friction resistance</label><br>
+				<input type="text" id="barrelFriction" value="100">
+				<select id="barrelFrictionUnits">
+					<option>g</option>
+					<option>N</option>
+				</select><br>
+
+				<label for="dartMass">Dart mass</label><br>
+				<input type="text" id="dartMass" value="100">
+				<select id="dartMassUnits">
+					<option>g</option>
+					<option>pound slug?</option>
+					<option>elite darts</option>
+					<option>FVJ</option>
+					<option>Worker darts</option>
+				</select><br>
+			</div>
+
+			<div id="propelDiv" style="display:inline-block;float:right; width:33%">
+				<label for="airVolume">Air tank volume</label><br>
+				<input type="text" id="airVolume" value="50">
+				<!--https://www.reddit.com/r/Nerf/comments/2h3vb9/rigid_air_tank_vs_elastic_bladder/ maybe implement some sort of lookup table-->
+				<select id="airVolumeUnits">
+					<option>mL</option>
+					<option>fl oz</option>
+				</select><br>
+
+				<label for="airPressure">Air tank pressure</label><br>
+				<input type="text" id="airPressure" value="40">
+				<select id="airPressureUnits">
+					<option>PSI</option>
+					<option>kPa</option>
+				</select><br>
+			</div>
+		</div>
+		<br>
 		<h3>What is the purpose of this tool?</h3>
 		<p>Oftentime when I construct springers with spare parts, I often find myself asking "Am I getting the right FPS? Are there major inefficiencies I should be tackling and optimising?". This tool provides an FPS approximation based on a simple physics model as a sanity check.</p>
 		<h3>Is this tool accurate?</h3>
-		<p>Probably not, this is just an approximation. Measurement inaccuracies exist, and I'm using a discrete time state space model (20ms intervals) vs a more ideal continuous time state space model driven by analytical solutions, which inevitably lend themselves to various systematic error. Hopefully with more user input and data points, it'll become better.</p>
+		<p>Probably not, this is just an approximation. Inaccuracies and irregularities occur everywhere - Measurement inaccuracies, I'm using a discrete time state space model (20ms intervals) vs a more ideal continuous time state space model driven by analytical solutions, and there are inevitably forces that I've not accounted for. Hopefully with more user input and data points, it'll become better.</p>
+		<h3>Factors still to account for:</h3>
+		<p>Bernoulli principle pressure reduction, air loss through dart, air loss through assembly, air tank pin pull time, dead space volume increase. Also have to actually account for the unit conversion.</p>
 	</body>
 </html>
