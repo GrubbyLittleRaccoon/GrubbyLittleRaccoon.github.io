@@ -48,31 +48,41 @@
 
 				// Calculate zoom/sizing in pixels
 				var tankWidth = (Math.cbrt(airVolume)) * 10; //assume cube air volume, convert to mm
-				var totalLength = (tankWidth + barrelLength) * 1.25; //Add 25 margin buffer to total mm length
+				var totalLength = (tankWidth + barrelLength) * 1.25; //Add 25% margin buffer to total mm length
 				var pixelsPerMM = myGameArea.canvas.width/totalLength;
 
-				// Barrel
+				//TODO: http://drawingincode.com/lessons/reference/fill_style/index.html Gradients for cylinders?
+
+				// Create Barrel
 				var barrelThicknessPixels = 1.6 * pixelsPerMM;
 				var barrelLengthPixels = barrelLength * pixelsPerMM;
 				var barrelWidthPixels = barrelWidth * pixelsPerMM;
-				barrelTop = new component(barrelLengthPixels, barrelWidthPixels, "orange", 20, myGameArea.canvas.height/2);
-				barrelBottom = new component(barrelLengthPixels, barrelWidthPixels, "orange", 20, myGameArea.canvas.height/2);
+				var tankWidthPixels = tankWidth * pixelsPerMM;
+				barrelTop = new component(barrelLengthPixels, barrelThicknessPixels, "brown", 
+					myGameArea.canvas.width * 0.9 - tankWidthPixels - barrelLengthPixels, 
+					myGameArea.canvas.height/2 - barrelThicknessPixels - barrelWidthPixels/2);
+				barrelBottom = new component(barrelLengthPixels, barrelThicknessPixels, "brown", 
+					myGameArea.canvas.width * 0.9 - tankWidthPixels - barrelLengthPixels,
+					myGameArea.canvas.height/2 + barrelWidthPixels/2);
 				
-				// Tank
+				// Create Tank
 				var tankWidthPixels = tankWidth * pixelsPerMM;
 				tank = new component(tankWidthPixels, tankWidthPixels, "black", 
 					myGameArea.canvas.width * 0.9 - tankWidthPixels, 
 					myGameArea.canvas.height/2 - tankWidthPixels/2)
 
-				// Dart
-				plunger = new component(30, 20, "blue", 20, myGameArea.canvas.height/2);
+				// Create Dart
+				var dartLengthPixels = 72 * pixelsPerMM;
+				plunger = new component(dartLengthPixels, barrelWidthPixels, "blue", 
+					myGameArea.canvas.width * 0.9 - tankWidthPixels - dartLengthPixels, 
+					myGameArea.canvas.height/2 - barrelWidthPixels/2);
 			}
 
 			function updateGameArea() {
 				myGameArea.clear(); //Clear the draw area
 
 				// Testing movement and refresh TODO: Delete and replace with parameterised
-				plunger.xPos += 1;
+				plunger.xPos -= 1;
 
 				// Redraw everything
 				barrelTop.update();
